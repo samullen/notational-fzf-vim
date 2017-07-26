@@ -31,6 +31,7 @@ let s:main_dir = expand(g:nv_directory) "get(g:, 'nv_main_directory', s:dirs[0])
 
 "=========================== Keymap ========================================
 
+" TODO add var to allow users to define split, vsplit, or tabedit
 let s:create_note_key = get(g:, 'nv_create_note_key', 'ctrl-x')
 let s:create_note_window = get(g:, 'nv_create_note_window', 'tabedit ')
 
@@ -111,22 +112,23 @@ endfunction
 " Use backslash in front of 'ag' to ignore aliases.
 
 command! -nargs=* -bang NV
-      \ call fzf#run(
-          \ fzf#wrap({
-              \ 'sink*': function(exists('*NV_note_handler') ? 'NV_note_handler' : '<sid>handler'),
-              \ 'source': '\ag ' .
-                  \ s:nv_ignore_pattern  .
-                  \ ' --count ' .
-                  \ ' --nogroup ' . 
-                  \ '"' . (<q-args> ==? '' ? '\S' : <q-args>) .
-                  \ '"' . ' 2>/dev/null ' .
-                  \ s:escape(s:main_dir) .
-                  \ ' 2>/dev/null | sed "s=.*/==" 2>/dev/null ' ,
-              \ 'options': '--print-query --ansi --multi --exact ' .
-                  \ ' --delimiter=":" --with-nth=1' .
-                  \ ' --tiebreak=length,begin,index ' .
-                  \ ' --expect=' . s:expect_keys .
-                  \ ' --bind alt-a:select-all,alt-d:deselect-all,alt-p:toggle-preview,alt-u:page-up,alt-d:page-down,ctrl-w:backward-kill-word ' .
-                  \ ' --color hl:68,hl+:110 '
-              \ }
-      \ ))
+  \ call fzf#run(
+    \ fzf#wrap({
+      \ 'sink*': function(exists('*NV_note_handler') ? 'NV_note_handler' : '<sid>handler'),
+      \ 'source': '\ag ' .
+        \ s:nv_ignore_pattern  .
+        \ '-l ' . 
+        \ '"' . (<q-args> ==? '' ? '\S' : <q-args>) .
+        \ '"' . ' 2>/dev/null ' .
+        \ s:escape(s:main_dir) . ' ' .
+        \ '2>/dev/null ' ,
+      \ 'options': '--print-query --ansi --multi --exact ' .
+        \ '--delimiter="/" --with-nth=-1 ' .
+        \ '--tiebreak=length,begin,index ' .
+        \ '--expect=' . s:expect_keys . ' ' .
+        \ '--bind alt-a:select-all,alt-d:deselect-all,alt-p:toggle-preview,alt-u:page-up,alt-d:page-down,ctrl-w:backward-kill-word ' .
+        \ '--color hl:68,hl+:110 ' .
+        \ '--preview="(highlight --quiet --force --out-format=' . s:highlight_format . ' --style solarized-dark -l {} || coderay {} || cat {}) 2> /dev/null | head -' . &lines . '" ' .
+        \ '--preview-window=' . join([s:preview_direction , s:preview_width ,  s:wrap_text ,  s:show_preview]) . ' ' ,
+    \ })
+  \ )
