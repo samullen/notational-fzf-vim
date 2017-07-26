@@ -5,9 +5,9 @@ endfunction
 
 "============================== User settings ==============================
 
-if !exists('g:nv_directories')
-    echomsg 'g:nv_directories is not defined'
-    finish
+if !exists('g:nv_directory')
+  echomsg 'g:nv_directory is not defined'
+  finish
 endif
 
 let s:ext = get(g:, 'nv_default_extension', '.md')
@@ -26,10 +26,8 @@ let s:preview_width = exists('g:nv_preview_width') ? string(float2nr(str2float(g
 let s:preview_direction = get(g:,'nv_preview_direction', 'right')
 
 
-" Expand all directories and add trailing slash to avoid issues later.
-let s:dirs = map(copy(g:nv_directories), 'expand(v:val)')
-
-let s:main_dir = get(g:, 'nv_main_directory', s:dirs[0])
+" Expand NV Directory and add trailing slash to avoid issues later.
+let s:main_dir = expand(g:nv_directory) "get(g:, 'nv_main_directory', s:dirs[0])
 
 "=========================== Keymap ========================================
 
@@ -49,21 +47,6 @@ let s:keymap = extend(s:keymap, {
 
 " FZF expect comma sep str
 let s:expect_keys = join(keys(s:keymap) + get(g:, 'nv_expect_keys', []), ',')
-
-
-"================================ Short Pathnames ==========================
-
-
-" Can't be default since python3 is required for it to work
-if get(g:, 'nv_use_short_pathnames', 0)
-    let s:filepath_index = '1.. '
-    " let s:format_path_expr = ' | ' . fnameescape(expand('<sfile>:p:h:h') . '/shorten_path_for_notational_fzf.py') . ' '
-    let s:format_path_expr = ' | sed "s=.*/==" '
-else
-    let s:filepath_index = '1.. '
-    let s:format_path_expr = ''
-endif
-
 
 "============================ Ignore patterns ==============================
 
@@ -137,10 +120,10 @@ command! -nargs=* -bang NV
                   \ ' --nogroup ' . 
                   \ '"' . (<q-args> ==? '' ? '\S' : <q-args>) .
                   \ '"' . ' 2>/dev/null ' .
-                  \ join(map(copy(s:dirs), 's:escape(v:val)')) .
-                  \ ' 2>/dev/null ' . s:format_path_expr  . ' 2>/dev/null ' ,
+                  \ s:escape(s:main_dir) .
+                  \ ' 2>/dev/null | sed "s=.*/==" 2>/dev/null ' ,
               \ 'options': '--print-query --ansi --multi --exact ' .
-                  \ ' --delimiter=":" --with-nth=' . s:filepath_index .
+                  \ ' --delimiter=":" --with-nth=1' .
                   \ ' --tiebreak=length,begin,index ' .
                   \ ' --expect=' . s:expect_keys .
                   \ ' --bind alt-a:select-all,alt-d:deselect-all,alt-p:toggle-preview,alt-u:page-up,alt-d:page-down,ctrl-w:backward-kill-word ' .
