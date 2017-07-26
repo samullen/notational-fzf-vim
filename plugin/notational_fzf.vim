@@ -56,8 +56,9 @@ let s:expect_keys = join(keys(s:keymap) + get(g:, 'nv_expect_keys', []), ',')
 
 " Can't be default since python3 is required for it to work
 if get(g:, 'nv_use_short_pathnames', 0)
-    let s:filepath_index = '3.. '
-    let s:format_path_expr = ' | ' . fnameescape(expand('<sfile>:p:h:h') . '/shorten_path_for_notational_fzf.py') . ' '
+    let s:filepath_index = '1.. '
+    " let s:format_path_expr = ' | ' . fnameescape(expand('<sfile>:p:h:h') . '/shorten_path_for_notational_fzf.py') . ' '
+    let s:format_path_expr = ' | sed "s=.*/==" '
 else
     let s:filepath_index = '1.. '
     let s:format_path_expr = ''
@@ -105,9 +106,8 @@ function! s:handler(lines) abort
        let candidates = []
        for filename in filenames
            " don't forget traiiling space in replacement
-           let linenum = substitute(filename, '\v.{-}:(\d+):.*$', '+\1 ', '')
-           let name = substitute(filename, '\v(.{-}):\d+:.*$', '\1', '')
-           call add(candidates, linenum . s:escape(name))
+           let name = substitute(filename, '\v(.{-}):\d+$', '\1', '')
+           call add(candidates, s:escape(s:main_dir . '/' . name))
        endfor
    endif
 
@@ -131,10 +131,11 @@ command! -nargs=* -bang NV
       \ call fzf#run(
           \ fzf#wrap({
               \ 'sink*': function(exists('*NV_note_handler') ? 'NV_note_handler' : '<sid>handler'),
-              \ 'source': '\ag --hidden ' .
+              \ 'source': '\ag ' .
                   \ s:nv_ignore_pattern  .
-                  \ ' --nogroup ' . '"' .
-                  \ (<q-args> ==? '' ? '\S' : <q-args>) .
+                  \ ' --count ' .
+                  \ ' --nogroup ' . 
+                  \ '"' . (<q-args> ==? '' ? '\S' : <q-args>) .
                   \ '"' . ' 2>/dev/null ' .
                   \ join(map(copy(s:dirs), 's:escape(v:val)')) .
                   \ ' 2>/dev/null ' . s:format_path_expr  . ' 2>/dev/null ' ,
@@ -143,8 +144,6 @@ command! -nargs=* -bang NV
                   \ ' --tiebreak=length,begin,index ' .
                   \ ' --expect=' . s:expect_keys .
                   \ ' --bind alt-a:select-all,alt-d:deselect-all,alt-p:toggle-preview,alt-u:page-up,alt-d:page-down,ctrl-w:backward-kill-word ' .
-                  \ ' --color hl:68,hl+:110 ' .
-                  \ ' --preview "(highlight --quiet --force --out-format=' . s:highlight_format . ' --style solarized-dark -l {1} || coderay {1} || cat {1}) 2> /dev/null | head -' . &lines . '" ' .
-                  \ ' --preview-window=' . join([s:preview_direction ,  s:preview_width ,  s:wrap_text ,  s:show_preview]) . ' ',
+                  \ ' --color hl:68,hl+:110 '
               \ }
       \ ))
