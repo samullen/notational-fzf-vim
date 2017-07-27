@@ -91,7 +91,7 @@ function! s:handler(lines) abort
        for filename in filenames
            " don't forget traiiling space in replacement
            let name = substitute(filename, '\v(.{-}):\d+$', '\1', '')
-           call add(candidates, s:escape(s:main_dir . '/' . name))
+           call add(candidates, s:escape(name))
        endfor
    endif
 
